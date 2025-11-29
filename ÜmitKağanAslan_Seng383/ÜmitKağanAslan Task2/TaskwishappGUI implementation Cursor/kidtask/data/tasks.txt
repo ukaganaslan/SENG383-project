@@ -1,4 +1,0 @@
-# TITLE|DESC|POINTS|DUEDATE|RATING|STATUS|ASSIGNEE_ID
-Bitkileri Sula|Salon bitkilerini sula|10|2025-11-30|0|PENDING|c1
-Matematik Çalış|Sayfa 45-50 arası testleri çöz|20|2025-12-01|0|PENDING|c1
-Odanı Topla|Oyuncakları kutusuna koy|15|2025-11-29|5|APPROVED|c1

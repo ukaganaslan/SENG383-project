@@ -1,4 +1,0 @@
-# TYPE|ID|NAME|EMAIL|POINTS
-CHILD|c1|Ali|ali@example.com|50
-PARENT|p1|Ayşe|parent@example.com
-TEACHER|t1|Mehmet Hoca|teacher@example.com
