@@ -2,7 +2,8 @@
 BeePlan Main Application
 """
 import logging
-from beeplan_engine import SchedulerEngine, SchedulingConflictError
+# DAYS_MAP'i engine'den import ediyoruz ki sıralamada kullanalım
+from beeplan_engine import SchedulerEngine, SchedulingConflictError, DAYS_MAP
 from data_loader import DataLoader
 
 def main():
@@ -25,8 +26,10 @@ def main():
         schedule = engine.generate_schedule()
         
         print("\n--- BAŞARILI ÇİZELGE ---")
-        # Sonucu gün ve saate göre sıralayalım
-        schedule.sort(key=lambda x: (x.day, x.start_time))
+        
+        # Sonucu GÜN (Pzt->Salı) ve SAAT'e göre sıralayalım
+        # DAYS_MAP.get(x.day, 7) kullanarak gün ismini sayıya çeviriyoruz.
+        schedule.sort(key=lambda x: (DAYS_MAP.get(x.day, 7), x.start_time))
         
         for s in schedule:
             c_name = courses[s.course_id].name
@@ -38,6 +41,8 @@ def main():
         print(f"\nÇizelgeleme Başarısız: {e}")
     except Exception as e:
         print(f"\nBeklenmeyen Hata: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

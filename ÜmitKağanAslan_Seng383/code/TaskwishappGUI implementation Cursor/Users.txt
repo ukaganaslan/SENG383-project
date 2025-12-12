@@ -1,0 +1,3 @@
+CHILD|C1|Ali|ali@okul.com|50
+PARENT|P1|Ayşe Hanım|ayse@veli.com
+TEACHER|T1|Mehmet Hoca|mehmet@okul.com

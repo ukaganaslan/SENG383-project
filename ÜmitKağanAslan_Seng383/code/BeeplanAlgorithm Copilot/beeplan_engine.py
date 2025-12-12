@@ -1,6 +1,7 @@
 """
 BeePlan Scheduler Engine
 Core Requirements Implementation
+(Revised for Day Ordering and Logic Constraints)
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -16,6 +17,17 @@ if not logger.handlers:
 
 TimeInterval = Tuple[time, time]
 
+# Günlerin sayısal ve kronolojik sırası (Önemli Düzeltme)
+DAYS_MAP = {
+    "Monday": 0,
+    "Tuesday": 1,
+    "Wednesday": 2,
+    "Thursday": 3,
+    "Friday": 4,
+    "Saturday": 5,
+    "Sunday": 6
+}
+
 # --- Yardımcılar ---
 def time_to_minutes(t: time) -> int:
     return t.hour * 60 + t.minute
@@ -26,6 +38,7 @@ def minutes_to_time(minutes: int) -> time:
     return time(h, m)
 
 def add_minutes(t: time, minutes: int) -> time:
+    # Basit wrap-around kontrolü için datetime kullanımı
     dt = datetime(2000, 1, 1, t.hour, t.minute) + timedelta(minutes=minutes)
     return dt.time()
 
@@ -118,18 +131,24 @@ class SchedulerEngine:
             if intervals_overlap(slot.start_time, slot_end, self.FRIDAY_BLOCK_START, self.FRIDAY_BLOCK_END):
                 return False
 
-        # 3. Lab-Teori İlişkisi
+        # 3. Lab-Teori İlişkisi (Düzeltildi)
         if course.required_room_type == RoomType.LAB and course.related_theory_id:
-            theory_found = False
             for s in schedule:
                 if s.course_id == course.related_theory_id:
-                    # Basit kontrol: Lab, Teoriyle aynı gün ve saatte çakışamaz + Teori daha önce olmalı
-                    # (Detaylı gün sıralaması burada basitleştirilmiştir)
-                    if s.day == slot.day and time_to_minutes(s.end_time) > time_to_minutes(slot.start_time):
-                        return False # Lab teoriden önce veya aynı anda başlıyor
-                    theory_found = True
-            # Eğer listede teori yoksa, sıralama hatası olmaması için algoritma teoriyi önce planlamalıydı.
-            # Bu kontrolü generate_schedule'daki sıralama ile sağlıyoruz.
+                    theory_day_idx = DAYS_MAP.get(s.day, 7)
+                    lab_day_idx = DAYS_MAP.get(slot.day, 7)
+
+                    # Kural: Lab, Teoriden daha önceki bir günde OLAMAZ.
+                    if lab_day_idx < theory_day_idx:
+                        return False 
+                    
+                    # Kural: Aynı gün ise, Lab saati Teoriden sonra başlamalı.
+                    if lab_day_idx == theory_day_idx:
+                        if time_to_minutes(s.end_time) > time_to_minutes(slot.start_time):
+                            return False
+            # Not: Backtracking algoritmasında 'sorting' sayesinde Teori genelde önce yerleşir.
+            # Ancak teori henüz yerleşmediyse burada hata vermiyoruz, çünkü ileride yerleşebilir.
+            # Algoritma yapısı gereği Teoriler önce işleniyor.
 
         # 4. Eğitmen Günlük Yükü (Max 4 Saat Teori)
         if course.is_theory:
@@ -163,9 +182,10 @@ class SchedulerEngine:
     def generate_schedule(self) -> List[ScheduleSlot]:
         self._validate_resources()
         
-        # Heuristic: Teorileri Lablardan ÖNCE planla ki is_valid kontrolü çalışabilsin
+        # Heuristic: Teorileri Lablardan ÖNCE planla.
+        # Bu sıralama, is_valid içindeki Lab kontrolünün çalışabilmesi için kritiktir.
         sorted_courses = sorted(self.courses.values(), key=lambda c: (
-            c.required_room_type == RoomType.LAB, # 0=Classroom, 1=Lab
+            1 if c.required_room_type == RoomType.LAB else 0, # 0=Classroom önce
             -c.year_level,
             -c.size
         ))
@@ -176,17 +196,16 @@ class SchedulerEngine:
             if idx == len(sorted_courses): return schedule
             
             course = sorted_courses[idx]
-            # Uygun Odalar
             valid_rooms = [r for r in self.rooms.values() if r.type == course.required_room_type and r.capacity >= course.size]
-            # Uygun Hoca
             instr_ids = [course.assigned_instructor_id] if course.assigned_instructor_id else list(self.instructors.keys())
 
             for i_id in instr_ids:
                 if i_id not in self.instructors: continue
                 instr = self.instructors[i_id]
                 
+                # availability_hours içinde hangi günler varsa onları döngüye al
+                # Ancak burada gün sıralamasına uymak zorunda değiliz, müsaitliğe bakıyoruz
                 for day, windows in instr.availability_hours.items():
-                    # 30'ar dakikalık adımlarla dene
                     candidates = self._generate_starts(windows, course.duration)
                     for start in candidates:
                         slot = ScheduleSlot(day, start, course.duration, 0, course.id, i_id)
@@ -199,7 +218,7 @@ class SchedulerEngine:
             return None
 
         result = backtrack(0)
-        if not result: raise SchedulingConflictError("Çözüm bulunamadı!")
+        if not result: raise SchedulingConflictError("Çözüm bulunamadı! Kısıtlamalar çok sıkı olabilir.")
         return result
 
     def _generate_starts(self, windows, duration, step=30):

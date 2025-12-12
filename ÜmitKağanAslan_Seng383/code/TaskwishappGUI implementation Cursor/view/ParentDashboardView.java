@@ -64,7 +64,8 @@ public class ParentDashboardView extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
         
-        tabbedPane.addTab("Görev Onayları ✅", createTasksPanel());
+        // Başlığı "Bekleyen Onaylar" olarak güncelledim çünkü artık bitmiş görevler buraya düşecek
+        tabbedPane.addTab("Tamamlanan Görev Onayları ✅", createTasksPanel());
         tabbedPane.addTab("Dilek İstekleri 🎁", createWishesPanel());
         
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -78,8 +79,8 @@ public class ParentDashboardView extends JFrame {
         btn.setBackground(bg);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false); // Kenarlığı kaldır, içi tam dolsun
-        btn.setOpaque(true);         // Arka plan rengini zorla
+        btn.setBorderPainted(false); 
+        btn.setOpaque(true);         
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
@@ -94,11 +95,10 @@ public class ParentDashboardView extends JFrame {
         };
         
         JTable table = new JTable(taskTableModel);
-        table.setRowHeight(50); // Butonlar sığsın diye yükseklik arttı
+        table.setRowHeight(50);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setForeground(Color.BLACK);
         
-        // Tablo başlıkları
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setForeground(Color.BLACK);
 
@@ -180,6 +180,7 @@ public class ParentDashboardView extends JFrame {
                 String title = titleF.getText().trim();
                 if (title.isEmpty()) return;
 
+                // Yeni görevler PENDING olarak başlar (Çocuğun yapması beklenir)
                 Task t = new Task(title, descF.getText(), Integer.parseInt(pointsF.getText()), 
                         dateF.getText(), TaskStatus.PENDING, (Child)childBox.getSelectedItem());
                 
@@ -203,10 +204,13 @@ public class ParentDashboardView extends JFrame {
     private void refreshData() {
         taskTableModel.setRowCount(0);
         for (Task t : DataManager.getTasks()) {
-            if (t.getStatus() == TaskStatus.PENDING) {
+            // ÖNEMLİ DEĞİŞİKLİK:
+            // Veli artık PENDING değil, sadece çocuğun bitirdiği (COMPLETED) görevleri onaylar.
+            if (t.getStatus() == TaskStatus.COMPLETED) {
                 taskTableModel.addRow(new Object[]{t.getTitle(), t.getAssignee().getName(), t.getPoints(), t.getDueDate(), t});
             }
         }
+        
         wishTableModel.setRowCount(0);
         for (Wish w : DataManager.getWishes()) {
             if ("PENDING".equals(w.getStatus())) {
@@ -221,17 +225,22 @@ public class ParentDashboardView extends JFrame {
         if (ratingStr == null) return;
         int rating = 5;
         try { rating = Integer.parseInt(ratingStr); } catch(Exception e){}
+        
         task.setStatus(TaskStatus.APPROVED);
         task.setRating(rating);
         if(task.getAssignee() != null) task.getAssignee().setTotalPoints(task.getAssignee().getTotalPoints() + task.getPoints());
+        
         DataManager.updateTask(task);
+        JOptionPane.showMessageDialog(this, "Görev onaylandı, puan verildi!");
         refreshData();
     }
+
     private void rejectTask(Task task) {
         task.setStatus(TaskStatus.REJECTED);
         DataManager.updateTask(task);
         refreshData();
     }
+
     private void approveWish(Wish wish) {
         if (wish.getChild().getTotalPoints() >= wish.getCost()) {
             wish.getChild().setTotalPoints(wish.getChild().getTotalPoints() - wish.getCost());
@@ -243,13 +252,14 @@ public class ParentDashboardView extends JFrame {
         }
         refreshData();
     }
+
     private void rejectWish(Wish wish) {
         wish.setStatus("REJECTED");
         DataManager.updateWish(wish);
         refreshData();
     }
     
-    // --- Renderers & Editors (FULL RENKLİ BUTONLAR) ---
+    // --- Renderers & Editors ---
     
     class ButtonRenderer extends JPanel implements javax.swing.table.TableCellRenderer {
         private final JButton b1;
@@ -258,16 +268,15 @@ public class ParentDashboardView extends JFrame {
         public ButtonRenderer(boolean isTask) {
             setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
             setOpaque(true);
-            setBackground(Color.WHITE); // Panel arkaplanı beyaz
+            setBackground(Color.WHITE); 
             
-            b1 = createFlatButton("Onayla", new Color(0x43A047)); // Canlı Yeşil
-            b2 = createFlatButton("Reddet", new Color(0xE53935)); // Canlı Kırmızı
+            b1 = createFlatButton("Onayla", new Color(0x43A047)); // Yeşil
+            b2 = createFlatButton("Reddet", new Color(0xE53935)); // Kırmızı
             
             add(b1); 
             add(b2);
         }
         public Component getTableCellRendererComponent(JTable t, Object v, boolean isS, boolean hasF, int r, int c) { 
-            // Seçiliyse arka planı tablonun seçim rengi yap, değilse beyaz
             setBackground(isS ? t.getSelectionBackground() : Color.WHITE);
             return this; 
         }

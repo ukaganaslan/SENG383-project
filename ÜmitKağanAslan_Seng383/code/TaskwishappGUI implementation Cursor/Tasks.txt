@@ -1,0 +1,3 @@
+Odanı Topla|Oyuncakları sepete at|20|2023-12-30|0|COMPLETED|C1
+Ödev Yap|Matematik syf 40|30|2023-12-31|0|APPROVED|C1
+çiçekleri sula|bahçedeki çiçekleri sula |10|2025-12-31|0|PENDING|C1
