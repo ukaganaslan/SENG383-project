@@ -171,7 +171,7 @@ public class ParentDashboardView extends JFrame {
         d.add(createLabel("  Öğrenci Seç:")); d.add(childBox);
 
         JButton saveBtn = createFlatButton("Görevi Ata", new Color(0x66BB6A));
-        saveBtn.addActionListener(e -> {
+saveBtn.addActionListener(e -> {
             try {
                 if (childBox.getSelectedItem() == null) {
                     JOptionPane.showMessageDialog(d, "Lütfen bir öğrenci seçin.");
@@ -180,7 +180,20 @@ public class ParentDashboardView extends JFrame {
                 String title = titleF.getText().trim();
                 if (title.isEmpty()) return;
 
-                // Yeni görevler PENDING olarak başlar (Çocuğun yapması beklenir)
+                // --- YENİ ZAMAN KONTROLÜ BAŞLANGICI ---
+                try {
+                    java.time.LocalDate selectedDate = java.time.LocalDate.parse(dateF.getText());
+                    if (selectedDate.isBefore(java.time.LocalDate.now())) {
+                        JOptionPane.showMessageDialog(d, "Hata: Geçmiş bir tarihe görev atayamazsınız!", "Tarih Hatası", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } catch (java.time.format.DateTimeParseException ex) {
+                    JOptionPane.showMessageDialog(d, "Hata: Geçersiz tarih formatı! (Y-A-G şeklinde giriniz)");
+                    return;
+                }
+                // --- YENİ ZAMAN KONTROLÜ BİTİŞİ ---
+
+                // Yeni görevler PENDING olarak başlar
                 Task t = new Task(title, descF.getText(), Integer.parseInt(pointsF.getText()), 
                         dateF.getText(), TaskStatus.PENDING, (Child)childBox.getSelectedItem());
                 

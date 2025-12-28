@@ -141,20 +141,29 @@ public class TeacherDashboardView extends JFrame {
         d.add(createLabel("  Öğrenci Seç:")); d.add(childBox);
 
         JButton save = createFlatButton("Ödevi Ata", new Color(0xFB8C00));
-        save.addActionListener(e -> {
-            try {
-                if (childBox.getSelectedItem() == null) {
-                    JOptionPane.showMessageDialog(d, "Öğrenci seçimi zorunludur.");
-                    return;
-                }
-                Task t = new Task(titleF.getText(), descF.getText(), Integer.parseInt(pointsF.getText()), 
-                        dateF.getText(), TaskStatus.PENDING, (Child)childBox.getSelectedItem());
-                DataManager.addTask(t);
-                refreshTable();
-                JOptionPane.showMessageDialog(d, "Ödev eklendi.");
-                d.dispose();
-            } catch(Exception ex) { JOptionPane.showMessageDialog(d, "Hata: " + ex.getMessage()); }
-        });
+    save.addActionListener(e -> {
+    try {
+        // AI Tutor Müdahalesi: Geçmiş tarih kontrolü eklendi [cite: 30, 56]
+        java.time.LocalDate selectedDate = java.time.LocalDate.parse(dateF.getText());
+        if (selectedDate.isBefore(java.time.LocalDate.now())) {
+            JOptionPane.showMessageDialog(d, "Hata: Geçmiş bir tarihe ödev atayamazsınız!", "Tarih Hatası", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (childBox.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(d, "Öğrenci seçimi zorunludur.");
+            return;
+        }
+        
+        Task t = new Task(titleF.getText(), descF.getText(), Integer.parseInt(pointsF.getText()), 
+                dateF.getText(), TaskStatus.PENDING, (Child)childBox.getSelectedItem());
+        DataManager.addTask(t);
+        refreshTable();
+        d.dispose();
+    } catch(Exception ex) { 
+        JOptionPane.showMessageDialog(d, "Hata: Tarih formatı YYYY-MM-DD olmalıdır."); 
+    }
+});
         d.add(new JLabel("")); d.add(save);
         d.setVisible(true);
     }
