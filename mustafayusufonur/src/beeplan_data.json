@@ -1,0 +1,57 @@
+{
+  "instructors": [
+    {
+      "id": 1,
+      "name": "Dr. Ada Lovelace (CENG)",
+      "availability": {
+        "Monday": [["09:00", "17:00"]],
+        "Wednesday": [["09:00", "12:00"]],
+        "Friday": [["09:00", "17:00"]]
+      }
+    },
+    {
+      "id": 2,
+      "name": "Dr. Alan Turing (SENG)",
+      "availability": {
+        "Tuesday": [["09:00", "17:00"]],
+        "Thursday": [["09:00", "17:00"]]
+      }
+    }
+  ],
+  "rooms": [
+    { "id": 101, "capacity": 30, "type": "LAB" },
+    { "id": 201, "capacity": 50, "type": "CLASSROOM" }
+  ],
+  "courses": [
+    {
+      "id": 101,
+      "name": "CENG101 Intro to CS (Theory)",
+      "duration": 120,
+      "room_type": "CLASSROOM",
+      "size": 40,
+      "department": "CENG",
+      "year": 1,
+      "assigned_instructor_id": 1
+    },
+    {
+      "id": 102,
+      "name": "CENG101 Intro to CS (Lab)",
+      "duration": 60,
+      "room_type": "LAB",
+      "size": 20,
+      "department": "CENG",
+      "year": 1,
+      "related_theory_id": 101
+    },
+    {
+      "id": 301,
+      "name": "SENG301 Software Arch",
+      "duration": 180,
+      "room_type": "CLASSROOM",
+      "size": 35,
+      "department": "SENG",
+      "year": 3,
+      "assigned_instructor_id": 2
+    }
+  ]
+}
